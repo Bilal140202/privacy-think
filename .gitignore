@@ -1,0 +1,40 @@
+# Rust / Cargo
+**/target/
+Cargo.lock.d/
+**/*.rs.bk
+
+# Tauri
+src-tauri/gen/schemas/
+
+# Model binaries (GGUF downloaded models should never be committed)
+*.gguf
+*.download
+
+# Logs and system
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Node / Frontend build (for upcoming UI redesign)
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
