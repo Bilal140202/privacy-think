@@ -509,6 +509,8 @@ impl VectorStore {
                     similarity,
                     doc_type,
                     section_title,
+                    match_source: Some("vector".to_string()),
+                    authority_score: None,
                 }
             })
             .collect();
@@ -649,6 +651,8 @@ impl VectorStore {
                 similarity,
                 doc_type,
                 section_title,
+                match_source: Some("vector".to_string()),
+                authority_score: None,
             }));
         }
 
@@ -743,6 +747,8 @@ impl VectorStore {
                 doc_type: row.get(6)?,
                 section_title: row.get(7)?,
                 similarity,
+                match_source: Some("keyword".to_string()),
+                authority_score: None,
             })
         }).map_err(|e| format!("FTS query failed: {}", e))?;
 
@@ -779,10 +785,12 @@ impl VectorStore {
         let chunk_ids: Vec<&str> = scores.keys().map(|s| s.as_str()).collect();
         let authority_map = self.batch_authority_scores(&chunk_ids);
 
-        // Apply authority score weighting
+        // Apply authority score weighting and tag with LKOS metadata
         let mut results: Vec<(f32, SearchResult)> = scores.into_values()
-            .map(|(score, result)| {
+            .map(|(score, mut result)| {
                 let authority = authority_map.get(&result.chunk_id).copied().unwrap_or(1.0);
+                result.match_source = Some("hybrid".to_string());
+                result.authority_score = Some(authority);
                 (score * authority, result)
             })
             .collect();
@@ -858,11 +866,24 @@ impl VectorStore {
 
             // Add chunk with optional metadata
             if include_metadata {
-                context.push_str(&format!(
-                    "\n--- SOURCE: {} (Page {}) ---\n",
+                let mut header = format!(
+                    "\n--- SOURCE: {} (Page {})",
                     chunk.document_name,
                     chunk.page_number.unwrap_or(0)
-                ));
+                );
+
+                if let Some(source) = &chunk.match_source {
+                    header.push_str(&format!(" [Match: {}]", source));
+                }
+
+                if let Some(auth) = chunk.authority_score {
+                    if auth > 1.1 {
+                        header.push_str(" [High Authority]");
+                    }
+                }
+
+                header.push_str(" ---\n");
+                context.push_str(&header);
 
                 if let Some(section) = &chunk.section_title {
                     context.push_str(&format!("Section: {}\n", section));
@@ -1038,6 +1059,8 @@ impl VectorStore {
                 similarity: 1.0, // Not similarity-based, so set to 100%
                 doc_type: row.get(6)?,
                 section_title: row.get(7)?,
+                match_source: Some("document_start".to_string()),
+                authority_score: None,
             })
         }).map_err(|e| format!("Failed to execute query: {}", e))?;
         
@@ -1073,6 +1096,8 @@ impl VectorStore {
                 similarity: 1.0,
                 doc_type: row.get(6)?,
                 section_title: row.get(7)?,
+                match_source: Some("document_start".to_string()),
+                authority_score: None,
             })
         }).map_err(|e| format!("Failed to execute query: {}", e))?;
         
@@ -1214,6 +1239,8 @@ impl VectorStore {
                 doc_type: row.get(6)?,
                 section_title: row.get(7)?,
                 similarity: 0.85, // Entity match has high base relevance
+                match_source: Some("entity".to_string()),
+                authority_score: None,
             })
         }).map_err(|e| format!("Entity search failed: {}", e))?;
 

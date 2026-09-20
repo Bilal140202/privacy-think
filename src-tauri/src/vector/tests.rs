@@ -31,10 +31,14 @@ mod integration_tests {
             similarity: 0.95,
             doc_type: Some("legal".to_string()),
             section_title: Some("Introduction".to_string()),
+            match_source: Some("hybrid".to_string()),
+            authority_score: Some(1.25),
         };
 
         assert_eq!(result.doc_type, Some("legal".to_string()));
         assert_eq!(result.section_title, Some("Introduction".to_string()));
+        assert_eq!(result.match_source, Some("hybrid".to_string()));
+        assert_eq!(result.authority_score, Some(1.25));
     }
 
     #[test]

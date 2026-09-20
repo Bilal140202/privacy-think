@@ -26,6 +26,12 @@ pub struct SearchResult {
     /// Section title if detected
     #[serde(default)]
     pub section_title: Option<String>,
+    /// LKOS Retrieval Source: "vector" | "keyword" | "hybrid" | "entity"
+    #[serde(default)]
+    pub match_source: Option<String>,
+    /// LKOS Positional Authority multiplier applied to this chunk
+    #[serde(default)]
+    pub authority_score: Option<f32>,
 }
 
 /// Search filters for narrowing hybrid search results
