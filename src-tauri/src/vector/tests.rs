@@ -41,7 +41,7 @@ mod integration_tests {
     fn test_lkos_e2e_pipeline() {
         use crate::rag::KnowledgeObject;
         use crate::vector::store::VectorStore;
-        use crate::document::{Document, DocumentChunk};
+        use crate::document::types::{Document, DocumentChunk, FileType, DocumentMetadata};
 
         // 1. Initialize global or in-memory store
         let store = VectorStore::global().expect("Failed to get store");
@@ -51,16 +51,18 @@ mod integration_tests {
         let doc = Document {
             id: "doc_e2e_1".to_string(),
             filename: "Contract_Agreement_2026.pdf".to_string(),
-            path: "/tmp/test.pdf".to_string(),
-            file_type: "pdf".to_string(),
+            path: std::path::PathBuf::from("/tmp/test.pdf"),
+            file_type: FileType::Pdf,
+            pages: vec![],
             total_pages: 5,
-            size_bytes: 10240,
-            created_at: "2026-08-01".to_string(),
-            chunk_count: 1,
-            doc_type: Some("legal".to_string()),
-            readiness_state: "complete".to_string(),
-            summary: Some("Executive summary".to_string()),
-            section_count: Some(1),
+            metadata: DocumentMetadata {
+                size_bytes: 10240,
+                extension: "pdf".to_string(),
+                is_code: false,
+                requires_ocr: false,
+                extraction_time_ms: 50,
+            },
+            created_at: chrono::Utc::now(),
         };
 
         let text = "SECTION 1. EXECUTIVE SUMMARY\nBilal signed the contract with Google Deepmind in 2026 for $50,000. \
@@ -71,11 +73,8 @@ The agreement covers Advanced Agentic Coding and LKOS Architecture.";
             document_id: "doc_e2e_1".to_string(),
             chunk_index: 0,
             text: text.to_string(),
-            page_number: Some(1),
-            token_count: Some(25),
-            language: Some("en".to_string()),
-            section_title: Some("SECTION 1. EXECUTIVE SUMMARY".to_string()),
-            knowledge_json: None,
+            char_count: text.len(),
+            source_page: Some(1),
         };
 
         let ko = KnowledgeObject::extract(&chunk.id, text, 0, 5);
